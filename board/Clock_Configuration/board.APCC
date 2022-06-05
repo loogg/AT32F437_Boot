@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <MCU>AT32F437</MCU>
+    <hext>12.000000</hext>
+    <hextbypass>0</hextbypass>
+    <pllrcs>0</pllrcs>
+    <pllms>1</pllms>
+    <pllns>48</pllns>
+    <pllfr>2</pllfr>
+    <sclkselect>1</sclkselect>
+    <ahbdiv>1</ahbdiv>
+    <apb1div>2</apb1div>
+    <apb2div>2</apb2div>
+    <usbdiv>6.0</usbdiv>
+    <hicktousb>0</hicktousb>
+    <tousbswitch>1</tousbswitch>
+    <hicktosclk>0</hicktosclk>
+    <clkout1>0</clkout1>
+    <clkout1div1>1</clkout1div1>
+    <clkout1div2>1</clkout1div2>
+    <clkout1pinselect>0</clkout1pinselect>
+    <clkout2>0</clkout2>
+    <clkout2div1>1</clkout2div1>
+    <clkout2div2>1</clkout2div2>
+    <clkout2pinselect>0</clkout2pinselect>
+</Configuration>
