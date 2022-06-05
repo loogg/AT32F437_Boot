@@ -18,11 +18,11 @@
 
 - SPI FLASH: W25Q128
   - SPI2:
-    PD1: SCK
-    PD3: MISO
-    PD4: MOSI
+    - PD1: SCK
+    - PD3: MISO
+    - PD4: MOSI
   - CS:
-    PD0
+    - PD0
 
 - 分区使用：
 
