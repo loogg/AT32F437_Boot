@@ -1,6 +1,7 @@
 #include "system.h"
 #include "boot.h"
 #include <board.h>
+#include "iap.h"
 
 #define DBG_TAG "system"
 #define DBG_LVL DBG_LOG
@@ -33,6 +34,12 @@ static int system_init(void) {
 }
 
 void system_process(void) {
+    static rt_tick_t _pre_tick = 0;
+
+    if ((g_system.step == SYSTEM_STEP_WAIT_SYNC) || (g_system.step == SYSTEM_STEP_BOOT_PROCESS)) {
+        if (iap_process() != RT_EOK) g_system.step = SYSTEM_STEP_ERROR;
+    }
+
     switch (g_system.step) {
         case SYSTEM_STEP_INIT: {
             int rc = system_init();
@@ -53,6 +60,7 @@ void system_process(void) {
             int rc = check_part_firm(download_part, download_header);
             if (rc != RT_EOK) {
                 LOG_E("Get OTA \"%s\" partition firmware filed!", download_part->name);
+                _pre_tick = rt_tick_get();
                 g_system.step++;
             } else {
                 if ((download_header->raw_size + sizeof(firm_pkg_t)) > app_part->len) {
@@ -60,6 +68,7 @@ void system_process(void) {
                           app_part->len, download_header->raw_size + sizeof(firm_pkg_t));
 
                     fal_partition_erase_all(download_part);
+                    _pre_tick = rt_tick_get();
                     g_system.step++;
                     break;
                 }
@@ -69,17 +78,29 @@ void system_process(void) {
             }
         } break;
 
-        /* SYSTEM_STEP_WAIT_SYNC
-           SYSTEM_STEP_BOOT_PROCESS
-           预留，可以作为强制停留在 Boot 功能
-         */
-        case SYSTEM_STEP_WAIT_SYNC:
-            g_system.step++;
-            break;
+        case SYSTEM_STEP_WAIT_SYNC: {
+            if (g_system.is_remain) {
+                LOG_I("sync:%u tick, sync cmd cnt:%u, enter boot", rt_tick_get() - _pre_tick,
+                      g_system.sync_cmd_cnt);
+                g_system.step++;
+                break;
+            }
 
-        case SYSTEM_STEP_BOOT_PROCESS:
-            g_system.step++;
-            break;
+            if ((rt_tick_get() - _pre_tick) >= rt_tick_from_millisecond(ENTER_BOOT_TIMEOUT)) {
+                LOG_W("wait sync timeout:%u tick, sync cmd cnt:%u, will jump.",
+                      rt_tick_get() - _pre_tick, g_system.sync_cmd_cnt);
+                g_system.step = SYSTEM_STEP_UPDATE;
+                break;
+            }
+        } break;
+
+        case SYSTEM_STEP_BOOT_PROCESS: {
+            if (g_system.is_quit) {
+                LOG_I("sync cmd cnt:%u, will jump.", g_system.sync_cmd_cnt);
+                g_system.step++;
+                break;
+            }
+        } break;
 
         case SYSTEM_STEP_UPDATE: {
             const struct fal_partition *app_part = g_system.app_part;
@@ -104,13 +125,13 @@ void system_process(void) {
             }
         } break;
 
-        case SYSTEM_STEP_ERROR:
+        case SYSTEM_STEP_ERROR: {
             LOG_E("init error.");
             rt_thread_mdelay(1000);
-            break;
+        } break;
 
-        default:
+        default: {
             g_system.step = SYSTEM_STEP_ERROR;
-            break;
+        } break;
     }
 }

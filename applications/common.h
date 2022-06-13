@@ -4,6 +4,7 @@
 
 #define BOOT_BKP           ERTC_DT15
 #define BOOT_APP_ADDR      0x08010000UL
+#define ENTER_BOOT_TIMEOUT 500
 #define APP_PART_NAME      "app"
 #define DOWNLOAD_PART_NAME "download"
 
@@ -35,6 +36,9 @@ typedef struct {
     const struct fal_partition *app_part;
     const struct fal_partition *download_part;
     firm_pkg_t download_header;
+    uint32_t sync_cmd_cnt;
+    int is_remain;
+    int is_quit;
     int download_verify_rc;
     int step;
 } g_system_t;

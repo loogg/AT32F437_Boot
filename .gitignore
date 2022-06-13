@@ -41,4 +41,4 @@ settings/
 cconfig.h
 project.uvoptx
 project.uvprojx
-!tools/*.exe
+!tools/packing/*.exe

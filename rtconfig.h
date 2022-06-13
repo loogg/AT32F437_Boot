@@ -105,6 +105,9 @@
 
 /* IoT Cloud */
 
+#define PKG_USING_AGILE_MODBUS
+#define PKG_USING_AGILE_MODBUS_V110
+#define PKG_AGILE_MODBUS_VER_NUM 0x10100
 
 /* security packages */
 
@@ -180,6 +183,7 @@
 #define BSP_USING_ON_CHIP_FLASH
 #define BSP_USING_UART
 #define BSP_USING_UART1
+#define BSP_USING_UART6
 #define BSP_USING_SPI
 #define BSP_USING_SPI2
 
