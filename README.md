@@ -10,7 +10,7 @@
 
 - RT-Thread 固件打包工具在 tools/packing 目录下。
 
-- RS485 升级工具在 tools/rs485_update 目录下，可在 WSL 下运行执行文件，命令行操作。
+- RS485 升级工具在 tools/rs485_update 目录下。
 
 - 使用 `scons --target=mdk5 -s` 生成工程
 
@@ -34,6 +34,9 @@
     - RX: PA5
   - EN: PA6
 
+- ERTC_BPR
+  - ERTC_DT15
+
 - 分区使用：
 
   | 分区 | Flash 设备 | 偏移地址 | 占用空间 |
@@ -43,6 +46,20 @@
   | download | SPI Flash | 0 | 1 * 1024 * 1024 |
 
 ## RS485 固件升级
+
+### 演示
+
+- 配置好串口并打开串口
+
+- 点击 `开始同步` 按钮后再 `上电` 或 `重启`，强制进入 Bootloader
+
+- 点击 `结束同步` 按钮
+
+- 选择文件开始升级
+
+- 地址一栏填 `0` 即为广播
+
+![yanshi](./figures/2.gif)
 
 ### Bootloader 启动过程
 

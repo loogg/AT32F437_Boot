@@ -42,3 +42,6 @@ cconfig.h
 project.uvoptx
 project.uvprojx
 !tools/packing/*.exe
+tools/rs485_update/RS485_Update_V1.0.0/Log
+!tools/rs485_update/RS485_Update_V1.0.0/*.exe
+
