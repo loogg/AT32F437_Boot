@@ -59,7 +59,7 @@
 
 - 地址一栏填 `0` 即为广播
 
-![yanshi](./figures/2.gif)
+![yanshi](./figures/rs485_update.gif)
 
 ### Bootloader 启动过程
 

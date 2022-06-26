@@ -96,7 +96,7 @@ static int rs485_receive(uint8_t *buf, int bufsz, int timeout) {
 int iap_process(void) {
     static uint8_t _init_ok = 0;
     static uint8_t _ctx_send_buf[AGILE_MODBUS_MAX_ADU_LENGTH];
-    static uint8_t _ctx_read_buf[2048];
+    static uint8_t _ctx_read_buf[5000];
     static agile_modbus_rtu_t _ctx_rtu;
     static int _remain_length = 0;
 
@@ -140,7 +140,7 @@ int iap_process(void) {
             if (rc > 0) rs485_send(ctx->send_buf, rc);
         } else {
             int max_frame = 50;
-            if (g_system.is_remain) max_frame = 1200;
+            if (g_system.is_remain) max_frame = 4200;
 
             if (total_len > max_frame || is_reset == 1) {
                 ctx->read_buf++;
@@ -149,8 +149,10 @@ int iap_process(void) {
                 continue;
             }
 
-            for (int i = 0; i < total_len; i++) {
-                _ctx_read_buf[i] = ctx->read_buf[i];
+            if (ctx->read_buf != _ctx_read_buf) {
+                for (int i = 0; i < total_len; i++) {
+                    _ctx_read_buf[i] = ctx->read_buf[i];
+                }
             }
 
             ctx->read_buf = _ctx_read_buf;
