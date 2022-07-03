@@ -48,47 +48,19 @@ void system_process(void) {
                 break;
             }
 
-            g_system.step++;
-        } break;
-
-        case SYSTEM_STEP_VERIFY_DOWNLOAD: {
-            const struct fal_partition *app_part = g_system.app_part;
-            const struct fal_partition *download_part = g_system.download_part;
-            firm_pkg_t *download_header = &g_system.download_header;
-            g_system.download_verify_rc = -RT_ERROR;
-
-            int rc = check_part_firm(download_part, download_header);
-            if (rc != RT_EOK) {
-                LOG_E("Get OTA \"%s\" partition firmware filed!", download_part->name);
-                _pre_tick = rt_tick_get();
-                g_system.step++;
-            } else {
-                if ((download_header->raw_size + sizeof(firm_pkg_t)) > app_part->len) {
-                    LOG_E("The partition \'%s\' length is (%d), need (%d)!", app_part->name,
-                          app_part->len, download_header->raw_size + sizeof(firm_pkg_t));
-
-                    fal_partition_erase_all(download_part);
-                    _pre_tick = rt_tick_get();
-                    g_system.step++;
-                    break;
-                }
-
-                g_system.download_verify_rc = RT_EOK;
-                g_system.step = SYSTEM_STEP_UPDATE;
-            }
+            _pre_tick = rt_tick_get();
+            g_system.step = SYSTEM_STEP_WAIT_SYNC;
         } break;
 
         case SYSTEM_STEP_WAIT_SYNC: {
             if (g_system.is_remain) {
-                LOG_I("sync:%u tick, sync cmd cnt:%u, enter boot", rt_tick_get() - _pre_tick,
-                      g_system.sync_cmd_cnt);
-                g_system.step++;
+                LOG_I("sync:%u tick, enter boot", rt_tick_get() - _pre_tick);
+                g_system.step = SYSTEM_STEP_BOOT_PROCESS;
                 break;
             }
 
             if ((rt_tick_get() - _pre_tick) >= rt_tick_from_millisecond(ENTER_BOOT_TIMEOUT)) {
-                LOG_W("wait sync timeout:%u tick, sync cmd cnt:%u, will jump.",
-                      rt_tick_get() - _pre_tick, g_system.sync_cmd_cnt);
+                LOG_W("wait sync timeout:%u tick, will jump.", rt_tick_get() - _pre_tick);
                 g_system.step = SYSTEM_STEP_UPDATE;
                 break;
             }
@@ -96,8 +68,9 @@ void system_process(void) {
 
         case SYSTEM_STEP_BOOT_PROCESS: {
             if (g_system.is_quit) {
-                LOG_I("sync cmd cnt:%u, will jump.", g_system.sync_cmd_cnt);
-                g_system.step++;
+                LOG_I("will jump.");
+                rt_thread_mdelay(100);
+                g_system.step = SYSTEM_STEP_UPDATE;
                 break;
             }
         } break;
@@ -105,19 +78,26 @@ void system_process(void) {
         case SYSTEM_STEP_UPDATE: {
             const struct fal_partition *app_part = g_system.app_part;
             const struct fal_partition *download_part = g_system.download_part;
-            firm_pkg_t *download_header = &g_system.download_header;
+            firm_pkg_t download_header = {0};
 
-            if (g_system.download_verify_rc == RT_EOK) {
-                int rc = firm_upgrade(download_part, download_header, app_part);
+            int rc = check_part_firm(download_part, &download_header);
+            if (rc == RT_EOK) {
+                rc = firm_upgrade(download_part, &download_header, app_part);
                 if (rc == RT_EOK) {
+                    LOG_I("The partition \'%s\' is erasing.", download_part->name);
                     fal_partition_erase_all(download_part);
+                    LOG_I("The partition \'%s\' erase success.", download_part->name);
+
                     boot_app_enable();
                 } else {
+                    LOG_E("firm update failed. now restart");
                     __disable_irq();
                     NVIC_SystemReset();
                 }
             } else {
                 firm_pkg_t app_header = {0};
+
+                LOG_E("Get OTA \"%s\" partition firmware filed!", download_part->name);
                 int rc = check_part_firm(app_part, &app_header);
                 if (rc != RT_EOK) LOG_W("Force the %s partition to run!", app_part->name);
 
